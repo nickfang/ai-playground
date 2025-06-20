@@ -1,0 +1,13 @@
+.env
+.cursor/**
+node_modules
+build
+pnpm-lock.yaml
+ARTICLE_DRAFT.md
+ARTICLE_OUTLINE.md
+
+
+# Ignore contents of data/, but not the directory itself
+data/*
+# Re-include the default memory file
+!data/memory.json
