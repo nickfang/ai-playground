@@ -70,12 +70,8 @@ Resources:
                 Provider: ECS
                 Version: "1"
               Configuration:
-                ClusterName:
-                  Fn::ImportValue:
-                    Fn::Sub: "${ProjectName}-ClusterName"
-                ServiceName:
-                  Fn::ImportValue:
-                    Fn::Sub: "${ProjectName}-ServiceName"
+                ClusterName: !Sub "${ProjectName}-cluster"
+                ServiceName: !Sub "${ProjectName}-service"
                 FileName: imagedefinitions.json
               InputArtifacts:
                 - Name: BuildOutput
@@ -100,15 +96,11 @@ Resources:
           - Name: AWS_ACCOUNT_ID
             Value: !Ref AWS::AccountId
           - Name: IMAGE_REPO_NAME
-            Value:
-              Fn::ImportValue:
-                Fn::Sub: "${ProjectName}-ImageRepoName"
+            Value: !Sub "${ProjectName}"
           - Name: IMAGE_TAG
             Value: latest
           - Name: CONTAINER_NAME
-            Value:
-              Fn::ImportValue:
-                Fn::Sub: "${ProjectName}-ContainerName"
+            Value: !Sub "${ProjectName}-container"
       Source:
         Type: CODEPIPELINE
         BuildSpec: gemini-cli/.codepipeline/buildspec.yml
