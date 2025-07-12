@@ -18,10 +18,10 @@ Parameters:
     Type: String
     Description: "The branch to trigger the pipeline"
     Default: "main"
-  GitHubTokenParameterName:
+  GitHubToken:
     Type: String
-    Description: "The name of the AWS Systems Manager Parameter Store parameter containing the GitHub token."
-    Default: "/codebuild/github/token"
+    Description: "The ARN of the AWS Secrets Manager secret containing the GitHub token."
+    Default: "arn:aws:secretsmanager:us-east-1:450382879278:secret:github-token-kQidPl"
 
 Resources:
   CodePipeline:
@@ -44,7 +44,7 @@ Resources:
                 Owner: !Ref GitHubOwner
                 Repo: !Ref GitHubRepo
                 Branch: !Ref GitHubBranch
-                OAuthToken: !Sub "{{resolve:ssm-secure:${GitHubTokenParameterName}}}"
+                OAuthToken: !Ref GitHubToken
               OutputArtifacts:
                 - Name: SourceOutput
         - Name: Build
@@ -70,11 +70,11 @@ Resources:
                 Provider: ECS
                 Version: "1"
               Configuration:
-                ClusterName: 
-                  Fn::ImportValue: 
+                ClusterName:
+                  Fn::ImportValue:
                     Fn::Sub: "${ProjectName}-ClusterName"
-                ServiceName: 
-                  Fn::ImportValue: 
+                ServiceName:
+                  Fn::ImportValue:
                     Fn::Sub: "${ProjectName}-ServiceName"
                 FileName: imagedefinitions.json
               InputArtifacts:
@@ -100,14 +100,14 @@ Resources:
           - Name: AWS_ACCOUNT_ID
             Value: !Ref AWS::AccountId
           - Name: IMAGE_REPO_NAME
-            Value: 
-              Fn::ImportValue: 
+            Value:
+              Fn::ImportValue:
                 Fn::Sub: "${ProjectName}-ImageRepoName"
           - Name: IMAGE_TAG
             Value: latest
           - Name: CONTAINER_NAME
-            Value: 
-              Fn::ImportValue: 
+            Value:
+              Fn::ImportValue:
                 Fn::Sub: "${ProjectName}-ContainerName"
       Source:
         Type: CODEPIPELINE
@@ -151,15 +151,8 @@ Resources:
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - ssm:GetParameter
-                Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/codebuild/github/token"
-              - Effect: Allow
-                Action:
-                  - kms:Decrypt
-                Resource: "*"
-                Condition:
-                  StringEquals:
-                    "kms:ViaService": !Sub "ssm.${AWS::Region}.amazonaws.com"
+                  - secretsmanager:GetSecretValue
+                Resource: !Ref GitHubToken
 
   CodeBuildRole:
     Type: AWS::IAM::Role
