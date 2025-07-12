@@ -21,7 +21,7 @@ Parameters:
   GitHubTokenParameterName:
     Type: String
     Description: "The name of the AWS Systems Manager Parameter Store parameter containing the GitHub token."
-    Default: "github-token"
+    Default: "/codebuild/github/token"
 
 Resources:
   CodePipeline:
@@ -152,7 +152,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - ssm:GetParameter
-                Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${GitHubTokenParameterName}"
+                Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/codebuild/github/token"
               - Effect: Allow
                 Action:
                   - kms:Decrypt
