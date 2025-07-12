@@ -44,7 +44,7 @@ Resources:
                 Owner: !Ref GitHubOwner
                 Repo: !Ref GitHubRepo
                 Branch: !Ref GitHubBranch
-                OAuthToken: !Sub "{{resolve:ssm-secure:${GitHubTokenParameterName}}}"
+                OAuthToken: !Sub "{{resolve:ssm:${GitHubTokenParameterName}}}"
               OutputArtifacts:
                 - Name: SourceOutput
         - Name: Build
@@ -153,6 +153,13 @@ Resources:
                 Action:
                   - ssm:GetParameter
                 Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${GitHubTokenParameterName}"
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    "kms:ViaService": !Sub "ssm.${AWS::Region}.amazonaws.com"
 
   CodeBuildRole:
     Type: AWS::IAM::Role
