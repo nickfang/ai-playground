@@ -96,7 +96,7 @@ resource "aws_ecs_task_definition" "main" {
   container_definitions = jsonencode([
     {
       name      = "${var.project_name}-container"
-      image     = "YOUR_AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/${var.project_name}:latest"
+      image     = "450382879278.dkr.ecr.us-east-1.amazonaws.com/${var.project_name}:latest"
       portMappings = [
         {
           containerPort = 3000

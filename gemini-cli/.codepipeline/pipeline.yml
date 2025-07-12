@@ -2,22 +2,22 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: "CodePipeline for the project"
 
 Parameters:
-  GitHubOwner: 
+  GitHubOwner:
     Type: String
     Description: "The GitHub owner or organization"
-    Default: "YOUR_GITHUB_USERNAME"
-  GitHubRepo: 
+    Default: "nickfang"
+  GitHubRepo:
     Type: String
     Description: "The GitHub repository name"
-    Default: "YOUR_GITHUB_REPOSITORY"
-  GitHubBranch: 
+    Default: "ai-playground"
+  GitHubBranch:
     Type: String
     Description: "The branch to trigger the pipeline"
     Default: "main"
-  GitHubToken: 
+  GitHubTokenParameterName:
     Type: String
-    Description: "The GitHub personal access token secret ARN"
-    Default: "arn:aws:secretsmanager:us-east-1:YOUR_AWS_ACCOUNT_ID:secret:github-token-xxxxxx"
+    Description: "The name of the AWS Systems Manager Parameter Store parameter containing the GitHub token."
+    Default: "github-token"
 
 Resources:
   CodePipeline:
@@ -40,7 +40,7 @@ Resources:
                 Owner: !Ref GitHubOwner
                 Repo: !Ref GitHubRepo
                 Branch: !Ref GitHubBranch
-                OAuthToken: !Ref GitHubToken
+                OAuthToken: !Sub "{{resolve:ssm:${GitHubTokenParameterName}}}"
               OutputArtifacts:
                 - Name: SourceOutput
         - Name: Build
@@ -99,7 +99,7 @@ Resources:
             Value: !ImportValue "${ProjectName}-ContainerName"
       Source:
         Type: CODEPIPELINE
-        BuildSpec: .codepipeline/buildspec.yml
+        BuildSpec: gemini-cli/.codepipeline/buildspec.yml
 
   CodePipelineRole:
     Type: AWS::IAM::Role
@@ -137,6 +137,10 @@ Resources:
                   - ecs:UpdateService
                   - ecs:RegisterTaskDefinition
                 Resource: "*"
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${GitHubTokenParameterName}"
 
   CodeBuildRole:
     Type: AWS::IAM::Role
