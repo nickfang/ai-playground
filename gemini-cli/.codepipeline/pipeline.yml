@@ -2,6 +2,10 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: "CodePipeline for the project"
 
 Parameters:
+  ProjectName:
+    Type: String
+    Description: "The name of the project"
+    Default: "gemini-cli"
   GitHubOwner:
     Type: String
     Description: "The GitHub owner or organization"
@@ -66,8 +70,8 @@ Resources:
                 Provider: ECS
                 Version: "1"
               Configuration:
-                ClusterName: !ImportValue "${ProjectName}-ClusterName"
-                ServiceName: !ImportValue "${ProjectName}-ServiceName"
+                ClusterName: !ImportValue !Sub "${ProjectName}-ClusterName"
+                ServiceName: !ImportValue !Sub "${ProjectName}-ServiceName"
                 FileName: imagedefinitions.json
               InputArtifacts:
                 - Name: BuildOutput
@@ -92,11 +96,11 @@ Resources:
           - Name: AWS_ACCOUNT_ID
             Value: !Ref AWS::AccountId
           - Name: IMAGE_REPO_NAME
-            Value: !ImportValue "${ProjectName}-ImageRepoName"
+            Value: !ImportValue !Sub "${ProjectName}-ImageRepoName"
           - Name: IMAGE_TAG
             Value: latest
           - Name: CONTAINER_NAME
-            Value: !ImportValue "${ProjectName}-ContainerName"
+            Value: !ImportValue !Sub "${ProjectName}-ContainerName"
       Source:
         Type: CODEPIPELINE
         BuildSpec: gemini-cli/.codepipeline/buildspec.yml
