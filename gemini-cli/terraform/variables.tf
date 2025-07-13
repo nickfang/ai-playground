@@ -9,3 +9,8 @@ variable "project_name" {
   type        = string
   default     = "gemini-cli-service"
 }
+
+variable "github_owner" {
+  description = "The GitHub owner or organization for the CodeStar Connection"
+  type        = string
+}
