@@ -53,9 +53,9 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
-resource "aws_security_group" "ecs_service" {
-  name        = "${var.project_name}-ecs-service-sg"
-  description = "Allow traffic to the ECS service"
+resource "aws_security_group" "lb" {
+  name        = "${var.project_name}-lb-sg"
+  description = "Allow HTTP traffic to ALB"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -63,6 +63,30 @@ resource "aws_security_group" "ecs_service" {
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.project_name}-lb-sg"
+  }
+}
+
+resource "aws_security_group" "ecs_service" {
+  name        = "${var.project_name}-ecs-service-sg"
+  description = "Allow traffic to the ECS service"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    from_port       = 3000
+    to_port         = 3000
+    protocol        = "tcp"
+    security_groups = [aws_security_group.lb.id]
   }
 
   egress {
@@ -111,6 +135,51 @@ resource "aws_ecs_task_definition" "main" {
   }
 }
 
+resource "aws_lb" "main" {
+  name               = "${var.project_name}-lb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.lb.id]
+  subnets            = aws_subnet.public[*].id
+
+  tags = {
+    Name = "${var.project_name}-lb"
+  }
+}
+
+resource "aws_lb_target_group" "main" {
+  name        = "${var.project_name}-tg"
+  port        = 3000
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id
+  target_type = "ip"
+
+  health_check {
+    path                = "/health"
+    protocol            = "HTTP"
+    matcher             = "200"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+  }
+
+  tags = {
+    Name = "${var.project_name}-tg"
+  }
+}
+
+resource "aws_lb_listener" "http" {
+  load_balancer_arn = aws_lb.main.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.main.arn
+  }
+}
+
 resource "aws_ecs_service" "main" {
   name            = "${var.project_name}-service"
   cluster         = aws_ecs_cluster.main.id
@@ -121,7 +190,13 @@ resource "aws_ecs_service" "main" {
   network_configuration {
     subnets         = aws_subnet.public[*].id
     security_groups = [aws_security_group.ecs_service.id]
-    assign_public_ip = true
+    assign_public_ip = false # ALB will handle public IP
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.main.arn
+    container_name   = "${var.project_name}-container"
+    container_port   = 3000
   }
 
   tags = {
