@@ -169,7 +169,7 @@ resource "aws_ecs_task_definition" "main" {
   container_definitions = jsonencode([
     {
       name      = "${var.project_name}-container"
-      image     = "450382879278.dkr.ecr.us-east-1.amazonaws.com/${var.project_name}:latest"
+      image     = "${aws_ecr_repository.main.repository_url}:latest"
       portMappings = [
         {
           containerPort = 3000
@@ -181,6 +181,20 @@ resource "aws_ecs_task_definition" "main" {
 
   tags = {
     Name = "${var.project_name}-task"
+  }
+}
+
+resource "aws_ecr_repository" "main" {
+  name = "${var.project_name}"
+
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = {
+    Name = "${var.project_name}-ecr-repo"
   }
 }
 

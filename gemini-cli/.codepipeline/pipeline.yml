@@ -18,10 +18,9 @@ Parameters:
     Type: String
     Description: "The branch to trigger the pipeline"
     Default: "main"
-  GitHubToken:
+  ConnectionArn:
     Type: String
-    Description: "The ARN of the AWS Secrets Manager secret containing the GitHub token."
-    Default: "arn:aws:secretsmanager:us-east-1:450382879278:secret:github-token-kQidPl"
+    Description: "The ARN of the CodeStar Connection to GitHub."
 
 Resources:
   CodePipeline:
@@ -37,14 +36,13 @@ Resources:
             - Name: Source
               ActionTypeId:
                 Category: Source
-                Owner: ThirdParty
-                Provider: GitHub
+                Owner: AWS
+                Provider: CodeStarSourceConnection
                 Version: "1"
               Configuration:
-                Owner: !Ref GitHubOwner
-                Repo: !Ref GitHubRepo
-                Branch: !Ref GitHubBranch
-                OAuthToken: !Ref GitHubToken
+                ConnectionArn: !Ref ConnectionArn
+                FullRepositoryId: !Sub "${GitHubOwner}/${GitHubRepo}"
+                BranchName: !Ref GitHubBranch
               OutputArtifacts:
                 - Name: SourceOutput
         - Name: Build
@@ -143,8 +141,8 @@ Resources:
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - secretsmanager:GetSecretValue
-                Resource: !Ref GitHubToken
+                  - codestar-connections:UseConnection
+                Resource: !Ref ConnectionArn
 
   CodeBuildRole:
     Type: AWS::IAM::Role
@@ -169,6 +167,13 @@ Resources:
                 Resource: "*"
               - Effect: Allow
                 Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:GetBucketVersioning
+                  - s3:PutObject
+                Resource: !Sub "arn:aws:s3:::${ArtifactStoreBucket}/*"
+              - Effect: Allow
+                Action:
                   - ecr:GetAuthorizationToken
                 Resource: "*"
               - Effect: Allow
@@ -179,6 +184,12 @@ Resources:
                   - ecr:CompleteLayerUpload
                   - ecr:PutImage
                 Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ProjectName}"
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameters
+                Resource:
+                  - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/codebuild/dockerhub/username"
+                  - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/codebuild/dockerhub/token"
 
 Outputs:
   PipelineUrl:
