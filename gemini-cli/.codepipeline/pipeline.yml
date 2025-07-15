@@ -5,7 +5,7 @@ Parameters:
   ProjectName:
     Type: String
     Description: "The name of the project"
-    Default: "gemini-cli"
+    Default: "gemini-cli-service"
   GitHubOwner:
     Type: String
     Description: "The GitHub owner or organization"
@@ -33,6 +33,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !GetAtt CodePipelineRole.Arn
+      Name: !Sub "${ProjectName}-pipeline"
       ArtifactStore:
         Type: S3
         Location: !Ref ArtifactStoreBucket
