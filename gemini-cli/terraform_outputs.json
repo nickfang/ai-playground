@@ -1,0 +1,22 @@
+{
+  "codestar_connection_arn": {
+    "sensitive": false,
+    "type": "string",
+    "value": "arn:aws:codestar-connections:us-east-1:450382879278:connection/c07aebe3-42ab-423d-9555-88b632ab0465"
+  },
+  "ecs_task_execution_role_arn": {
+    "sensitive": false,
+    "type": "string",
+    "value": "arn:aws:iam::450382879278:role/gemini-cli-service-ecs-task-execution-role"
+  },
+  "ecs_task_role_arn": {
+    "sensitive": false,
+    "type": "string",
+    "value": "arn:aws:iam::450382879278:role/gemini-cli-service-ecs-task-role"
+  },
+  "service_url": {
+    "sensitive": false,
+    "type": "string",
+    "value": "http://gemini-cli-service-lb-499236929.us-east-1.elb.amazonaws.com"
+  }
+}

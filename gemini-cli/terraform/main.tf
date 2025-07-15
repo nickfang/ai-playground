@@ -165,17 +165,36 @@ resource "aws_ecs_task_definition" "main" {
   cpu                      = 256
   memory                   = 512
   execution_role_arn       = aws_iam_role.ecs_task_execution.arn
+  task_role_arn            = aws_iam_role.ecs_task.arn
 
   container_definitions = jsonencode([
     {
-      name      = "${var.project_name}-container"
-      image     = "${aws_ecr_repository.main.repository_url}:latest"
+      name      = "${var.project_name}-container",
+      image     = "${aws_ecr_repository.main.repository_url}:latest",
       portMappings = [
         {
-          containerPort = 3000
+          containerPort = 3000,
           hostPort      = 3000
         }
-      ]
+      ],
+      healthCheck = {
+        command = [
+          "CMD-SHELL",
+          "wget -q -O /dev/null --spider http://localhost:3000/health || exit 1"
+        ],
+        interval    = 30,
+        timeout     = 5,
+        retries     = 3,
+        startPeriod = 30
+      },
+      logConfiguration = {
+        logDriver = "awslogs",
+        options = {
+          "awslogs-group"         = "/ecs/${var.project_name}-task",
+          "awslogs-region"        = var.aws_region,
+          "awslogs-stream-prefix" = "ecs"
+        }
+      }
     }
   ])
 
@@ -249,6 +268,7 @@ resource "aws_ecs_service" "main" {
   task_definition = aws_ecs_task_definition.main.arn
   desired_count   = 1
   launch_type     = "FARGATE"
+  enable_execute_command = true
 
   network_configuration {
     subnets         = aws_subnet.private[*].id # Use private subnets for tasks
@@ -291,6 +311,57 @@ resource "aws_iam_role" "ecs_task_execution" {
 resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
   role       = aws_iam_role.ecs_task_execution.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+resource "aws_iam_role" "ecs_task" {
+  name = "${var.project_name}-ecs-task-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${var.project_name}-ecs-task-role"
+  }
+}
+
+resource "aws_iam_policy" "ecs_exec" {
+  name        = "${var.project_name}-ecs-exec-policy"
+  description = "Allow ECS Exec"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${var.project_name}-ecs-exec-policy"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_exec" {
+  role       = aws_iam_role.ecs_task.name
+  policy_arn = aws_iam_policy.ecs_exec.arn
 }
 
 resource "aws_codestarconnections_connection" "github" {
