@@ -325,7 +325,8 @@ resource "aws_iam_role_policy" "ecs_task_execution_logs" {
       {
         Effect = "Allow"
         Action = [
-          "logs:CreateLogGroup"
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream"
         ]
         Resource = "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/ecs/${var.project_name}-task"
       }
