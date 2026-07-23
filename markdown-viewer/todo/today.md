@@ -1,0 +1,5 @@
+- [x] Create md viewer
+- [/] Figure out how to make this easy to use
+- [ ] Test
+- [!] Drink Water 
+- [-] Get a job
