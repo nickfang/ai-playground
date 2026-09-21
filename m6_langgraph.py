@@ -8,6 +8,7 @@ from lc_tools import LC_TOOLS, TOOL_BY_NAME
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]
+    counter: int
 
 SYSTEM = (
    "You are an instructor that teaches information from the personal knowledge vault (Cortex)."
@@ -42,7 +43,12 @@ def verify_node(state: State) -> dict:
         f"Reply PASS or FAIL with one sentence.\n\nAnswer: \n{answer}\n\nSources:\n{sources}"
     )])
     print(f"  [verify] {verdict.text}")
-    return {}
+    if "PASS" in verdict.text:
+        return {}
+    elif "FAIL" in verdict.text:
+        return {}
+    else:
+        return {}
 
 def route(state: State) -> str:
     ai = state["messages"][-1]
