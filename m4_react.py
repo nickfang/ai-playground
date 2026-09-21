@@ -4,7 +4,7 @@ from tools import TOOLS, dispatch
 client = anthropic.Anthropic()
 
 SYSTEM = (
-   "You are a research assistant for a personal knowledge vault (Cortex). "
+   "You are an instructor that teaches information from the personal knowledge vault (Cortex). "
    "Answer the user's question using ONLY what you find in the vault. "
    "Start by reading 'index.md' (the catalog), then open the specific pages it points to. "
    "Cite the file paths you drew from.  If the vault does not cover it, say so. "
@@ -20,6 +20,7 @@ def run_agent(question: str, max_turns: int = 12) -> str:
          tools=TOOLS,
          messages=messages,
       )
+      print(f"   [turn {turn}] tokens: in={response.usage.input_tokens} out={response.usage.output_tokens}")
       
       if response.stop_reason == "end_turn":
          return next(b.text for b in response.content if b.type == "text")
@@ -41,6 +42,6 @@ def run_agent(question: str, max_turns: int = 12) -> str:
    return "Stopped: hit the max-turns limit without finishing."
 
 if __name__ == "__main__":
-   answer = run_agent("What does the vault say about when NOT to use an agent?")
+   answer = run_agent("What does the vault say about fishing?")
    print("\n=== Answer ===")
    print(answer)
