@@ -6,9 +6,12 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage
 from lc_tools import LC_TOOLS, TOOL_BY_NAME
 
+MAX_RETRIES = 2
+
 class State(TypedDict):
     messages: Annotated[list, add_messages]
     counter: int
+    verdict: str
 
 SYSTEM = (
    "You are an instructor that teaches information from the personal knowledge vault (Cortex)."
@@ -21,7 +24,7 @@ model = ChatAnthropic(model="claude-opus-4-8", max_tokens=16000).bind_tools(LC_T
 critic = ChatAnthropic(model="claude-opus-4-8", max_tokens=1024)
 
 def agent_node(state: State) -> dict:
-    ai = model.invoke([SYSTEM] + state["messages"])
+    ai = model.invoke([SystemMessage(SYSTEM)] + state["messages"])
     return {"messages": [ai]}
 
 def tools_node(state: State) -> dict:
@@ -43,16 +46,29 @@ def verify_node(state: State) -> dict:
         f"Reply PASS or FAIL with one sentence.\n\nAnswer: \n{answer}\n\nSources:\n{sources}"
     )])
     print(f"  [verify] {verdict.text}")
-    if "PASS" in verdict.text:
-        return {}
-    elif "FAIL" in verdict.text:
-        return {}
-    else:
-        return {}
+    attempts = state.get("counter", 0) + 1
+
+    if verdict.text.strip().upper().startswith("PASS"):
+        return {"verdict": "PASS", "counter": attempts}
+    return {
+        "verdict": "FAIL",
+        "counter": attempts,
+        "messages": [HumanMessage(
+            f"A reviewer rejected your answer: {verdict.text}\n"
+            "Re-read the sources if needed and give a corrected, cited answer."
+        )],
+    }
 
 def route(state: State) -> str:
     ai = state["messages"][-1]
     return "tools" if ai.tool_calls else "verify"
+
+def route_verify(state: State) -> str:
+    if state["verdict"] == "PASS":
+        return END
+    if state["counter"] > MAX_RETRIES:
+        return END
+    return "agent"
 
 graph = StateGraph(State)
 graph.add_node("agent", agent_node)
@@ -61,14 +77,13 @@ graph.add_node("verify", verify_node)
 graph.add_edge(START, "agent")
 graph.add_conditional_edges("agent", route, {"tools": "tools", "verify": "verify"})
 graph.add_edge("tools", "agent") # after running tools, think again
-graph.add_edge("verify", END)
+graph.add_conditional_edges("verify", route_verify, {"agent": "agent", END: END})
 app = graph.compile()
 print(app.get_graph().draw_mermaid())
 
 if __name__ == "__main__":
     result = app.invoke(
-        {"messages": [HumanMessage("What does the vault say about when Not to use an agent?")]},
-        config={"recursion_limit": 25},
+       {"messages": [HumanMessage("What does the vault say about when Not to use an agent?")]}
     )
     print("\n=== ANSWER ===")
     print(result["messages"][-1].text)
