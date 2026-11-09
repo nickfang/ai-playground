@@ -1,0 +1,86 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	agent(agent)
+	tools(tools)
+	verify(verify)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> agent;
+	agent -.-> tools;
+	agent -.-> verify;
+	tools --> agent;
+	verify --> __end__;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc
+
+Traceback (most recent call last):
+  File "/home/nfang/workspace/cortex-agent-lab/.venv/lib/python3.12/site-packages/langchain_anthropic/chat_models.py", line 2597, in _generate
+    raw_response = self._create(payload)
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/nfang/workspace/cortex-agent-lab/.venv/lib/python3.12/site-packages/langchain_anthropic/chat_models.py", line 2176, in _create
+    return self._client.messages.with_raw_response.create(**payload)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/nfang/workspace/cortex-agent-lab/.venv/lib/python3.12/site-packages/anthropic/_response.py", line 797, in wrapped
+    return cast(APIResponse[R], func(*args, **kwargs))
+                                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/nfang/workspace/cortex-agent-lab/.venv/lib/python3.12/site-packages/anthropic/_utils/_utils.py", line 294, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/nfang/workspace/cortex-agent-lab/.venv/lib/python3.12/site-packages/anthropic/resources/messages/messages.py", line 1027, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "/home/nfang/workspace/cortex-agent-lab/.venv/lib/python3.12/site-packages/anthropic/_base_client.py", line 1543, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/nfang/workspace/cortex-agent-lab/.venv/lib/python3.12/site-packages/anthropic/_base_client.py", line 1208, in request
+    raise self._make_status_error_from_response(response) from None
+anthropic.AuthenticationError: Error code: 401 - {'type': 'error', 'error': {'type': 'authentication_error', 'message': 'invalid x-api-key'}, 'request_id': 'req_011Cfid9atQHzfiewR6F6Ggv'}
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/nfang/workspace/cortex-agent-lab/m6_langgraph.py", line 69, in <module>
+    result = app.invoke(
+             ^^^^^^^^^^^
+  File "/home/nfang/workspace/cortex-agent-lab/.venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 3913, in invoke
+    for chunk in self.stream(
+  File "/home/nfang/workspace/cortex-agent-lab/.venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 2967, in stream
+    for _ in runner.tick(
+  File "/home/nfang/workspace/cortex-agent-lab/.venv/lib/python3.12/site-packages/langgraph/pregel/_runner.py", line 207, in tick
+    run_with_retry(
+  File "/home/nfang/workspace/cortex-agent-lab/.venv/lib/python3.12/site-packages/langgraph/pregel/_retry.py", line 617, in run_with_retry
+    return task.proc.invoke(task.input, config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/nfang/workspace/cortex-agent-lab/.venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 707, in invoke
+    input = context.run(step.invoke, input, config, **kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/nfang/workspace/cortex-agent-lab/.venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 447, in invoke
+    ret = self.func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/nfang/workspace/cortex-agent-lab/m6_langgraph.py", line 25, in agent_node
+    ai = model.invoke([SYSTEM] + state["messages"])
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/nfang/workspace/cortex-agent-lab/.venv/lib/python3.12/site-packages/langchain_core/runnables/base.py", line 6014, in invoke
+    return self.bound.invoke(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/nfang/workspace/cortex-agent-lab/.venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 488, in invoke
+    self.generate_prompt(
+  File "/home/nfang/workspace/cortex-agent-lab/.venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1877, in generate_prompt
+    return self.generate(prompt_messages, stop=stop, callbacks=callbacks, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/nfang/workspace/cortex-agent-lab/.venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 1684, in generate
+    self._generate_with_cache(
+  File "/home/nfang/workspace/cortex-agent-lab/.venv/lib/python3.12/site-packages/langchain_core/language_models/chat_models.py", line 2022, in _generate_with_cache
+    result = self._generate(
+             ^^^^^^^^^^^^^^^
+  File "/home/nfang/workspace/cortex-agent-lab/.venv/lib/python3.12/site-packages/langchain_anthropic/chat_models.py", line 2601, in _generate
+    _handle_anthropic_api_error(e)
+  File "/home/nfang/workspace/cortex-agent-lab/.venv/lib/python3.12/site-packages/langchain_anthropic/chat_models.py", line 1295, in _handle_anthropic_api_error
+    raise AnthropicAuthenticationError(
+langchain_anthropic.chat_models.AnthropicAuthenticationError: Error code: 401 - {'type': 'error', 'error': {'type': 'authentication_error', 'message': 'invalid x-api-key'}, 'request_id': 'req_011Cfid9atQHzfiewR6F6Ggv'}
+During task with name 'agent' and id '296ef3b9-8d74-5bdf-dbab-0e1ad71881fe'
